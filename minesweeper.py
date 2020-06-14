@@ -256,6 +256,6 @@ class MinesweeperAI():
         for i in range(0, self.height):
             for j in range(self.width):
                 cell = (i, j)
-                if not (cell in self.mine or cell in self.moves_made):
+                if not (cell in self.mines or cell in self.moves_made):
                     return cell
         return None
