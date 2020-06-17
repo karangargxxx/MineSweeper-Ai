@@ -198,33 +198,34 @@ class MinesweeperAI():
             for j in range(cell[1] - 1, cell[1] + 2):
                 if (i,j) == cell:
                     continue
+                # check if cell in bounds and not already mine safe or a move made
                 if 0 <= i < self.height and 0 <= j < self.width and not ((i,j) in self.mines or (i,j) in self.moves_made or (i,j) in self.safes):
                     newCells.add((i, j))
-                    if (i,j) in self.mines:
-                        count -= 1
-        self.knowledge.append(Sentence(newCells, count))
+                # if this cell is a mine then reduce count because we know about it already no need to have 
+                if (i,j) in self.mines:
+                    count -= 1
+        # only add the new info if there is something new
+        if not len(newCells) == 0:
+            newInfo = Sentence(newCells, count)
+            if not newInfo in self.knowledge:
+                self.knowledge.append(newInfo)
 
         for sentence in self.knowledge:
-            safe = sentence.known_safes()
-            mine = sentence.known_mines()
-            try:
-                for cell in safe:
-                    if not cell in self.safes:
-                        self.safes.add(cell)
-                for cell in mine:
-                    if  not cell in self.mines:
-                        self.mines.add(cell)
-            except TypeError as e:
-                pass
+            if sentence.known_safes():
+                self.safes.update(sentence.known_safes())
+            if sentence.known_mines():
+                self.mines.update(sentence.known_mines())
 
+        newKnowledgeList = []
         for first in self.knowledge:
             for second in self.knowledge:
                 if first == second:
                     continue
                 if second.cells.issubset(first.cells):
                     newKnowledge = Sentence(first.cells - second.cells, first.count - second.count)
-                    if not newKnowledge in self.knowledge:
-                        self.knowledge.append(newKnowledge)
+                    if not newKnowledge in newKnowledgeList and not newKnowledge in self.knowledge:
+                        newKnowledgeList.append(newKnowledge)
+        self.knowledge.extend(newKnowledgeList)
 
 
     def make_safe_move(self):
@@ -257,5 +258,5 @@ class MinesweeperAI():
             for j in range(self.width):
                 cell = (i, j)
                 if not (cell in self.mines or cell in self.moves_made):
-                    return cell
+                    return cell       
         return None
